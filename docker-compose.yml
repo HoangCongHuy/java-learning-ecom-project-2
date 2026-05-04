@@ -64,6 +64,14 @@ services:
       timeout: 10s
       retries: 15
 
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: ecom-mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # Web UI
+
   app:
     build:
       context: .
@@ -77,6 +85,8 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      mailpit:
+        condition: service_started
     ports:
       - "8080:8080"
     environment:
@@ -87,6 +97,12 @@ services:
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_MAIL_HOST: mailpit
+      SPRING_MAIL_PORT: 1025
+      APP_MAIL_FROM: ${APP_MAIL_FROM:-noreply@ecom.local}
+      APP_JWT_SECRET: ${APP_JWT_SECRET:-change-me-in-production-min-32-chars-long}
+      APP_JWT_ACCESS_TTL_MINUTES: ${APP_JWT_ACCESS_TTL_MINUTES:-15}
+      APP_JWT_REFRESH_TTL_DAYS: ${APP_JWT_REFRESH_TTL_DAYS:-7}
 
 volumes:
   mysql-data:
